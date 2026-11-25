@@ -66,7 +66,12 @@ function onBatch(state: BarsState, _batch: Batch): OrderInput[] {
       s.peak = null;
       const crossUp = prevFast <= prevSlow && s.fast > s.slow;
       const aboveSlow = closeScaled > s.slow;
-      if (crossUp && aboveSlow) {
+      let exposure = 0n;
+      for (const [heldSymbol, heldPos] of state.positions) {
+        exposure += state.value(heldSymbol, heldPos.qty);
+      }
+      const exposureOk = exposure * 100n < state.equity * 90n;
+      if (crossUp && aboveSlow && exposureOk) {
         let size = (state.equity * 2000n) / 10000n; // 20% of equity
         const room = state.weightRoom(symbol);
         if (size > room) size = room;
